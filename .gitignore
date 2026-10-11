@@ -1,0 +1,6 @@
+.metadata/
+.recommenders/
+Debug/
+Release/
+*.launch
+.settings/
