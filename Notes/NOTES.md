@@ -20,6 +20,25 @@ A sector survives ~10,000 erase cycles. It is for code and rarely changing data
 ## **Slower than CPU**
 At 180 MHz, Flash cannot deliver a word in every cycle, so the MCU inserts wait states (CPU pauses a few cycles per read). The MCU chip hides this with the "ART accelerator". If the clock is set too high without enough wait states, the CPU reads nonsense and crashes.
 
+# Memory Map
+
+Program memory, data memory, registers and I/O ports are organized within the same linear 4-Gbyte address space. The lowest numbered byte in a word is considered the word's least significant byte, and the highest numbered byte the most significant
+
+The address space is divided to eight blocks, 512 Mbytes each.
+
+Flash - 0x0800 0000 (part of FMC)
+SRAM - 0x2000 0000
+Peripherals - 0x4000 0000
+Registers such as `GPIOx->ODR` are just addresses in this region.
+
+See 2.2.2 in the RM0390 to see the addresses of everything
+
+# Boot Config
+The CPU will ALWAYS fetch the reset vector from address `0x0000 0000`. BOOT0/BOOT1 pins (latched on the 4th rising edge of SYSCLK) chooses which memory is aliased in the address.
+BOOT0 = 0; Boots from main Flash. Normal case
+BOOT0 = 1; BOOT1 = 0: Boots from system memory (built in bootloader, flash over UART/USB)
+BOOT0 = 1; BOOT1 = 1: boots from embedded SRAM
+See 2.3 in RM0390
 
 # **The Vector Table**
 
@@ -84,36 +103,6 @@ Upon turning on or reset, the CPU does not run main() immediately. The CPU loads
 Example Case
 A global variable `int x =5;` needs both properties, it has to survive power off (stored in Flash), and has to be modifiable during runtime (must be in RAM too). `Reset_Handler` does this by copying the initial values from Flash to RAM before `main()` runs
 
-# Memory Map
-
-Program memory, data memory, registers and I/O ports are organized within the same linear 4-Gbyte address space. The lowest numbered byte in a word is considered the word's least significant byte, and the highest numbered byte the most significant
-
-The address space is divided to eight blocks, 512 Mbytes each.
-
-Flash - 0x0800 0000 (part of FMC)
-SRAM - 0x2000 0000
-Peripherals - 0x4000 0000
-Registers such as `GPIOx->ODR` are just addresses in this region.
-
-See 2.2.2 in the RM0390 to see the addresses of everything
-
-# Boot Config
-The CPU will ALWAYS fetch the reset vector from address `0x0000 0000`. BOOT0/BOOT1 pins (latched on the 4th rising edge of SYSCLK) chooses which memory is aliased in the address.
-BOOT0 = 0; Boots from main Flash. Normal case
-BOOT0 = 1; BOOT1 = 0: Boots from system memory (built in bootloader, flash over UART/USB)
-BOOT0 = 1; BOOT1 = 1: boots from embedded SRAM
-See 2.3 in RM0390
-
-# SystemInit
-A standard function. Runs right after reset and before jumping to `main`.
-
-      /* Configure the Vector Table location -------------------------------------*/
-    #if defined(USER_VECT_TAB_ADDRESS)
-      SCB->VTOR = VECT_TAB_BASE_ADDRESS | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal SRAM */
-    #endif /* USER_VECT_TAB_ADDRESS */
-    
-Here the SystemInit function finds sets the vector table location upon initialization.
-
 # Linker Symbols
 Special variables generated that represent the memory addresses or sizes of specific sections within the memory map. Found in STM32F446RETX_FLASH
 
@@ -175,6 +164,17 @@ Size: `0x228` - `0x70` = `0x1B8` = 440 bytes
 Takes no Flash space, just a size.
     
     
+# SystemInit
+A standard function. Runs right after reset and before jumping to `main`.
+
+      /* Configure the Vector Table location -------------------------------------*/
+    #if defined(USER_VECT_TAB_ADDRESS)
+      SCB->VTOR = VECT_TAB_BASE_ADDRESS | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal SRAM */
+    #endif /* USER_VECT_TAB_ADDRESS */
+    
+Here the SystemInit function finds sets the vector table location upon initialization.
+
+
 # What happens between reset and `main()`. 
 CPU loads SP and PC from the vector table. `Reset_Handler` copies `.data` from Flash to RAM, zeroes `.bss`*, calls `SystemInit`, runs the static initializers and branches to main. 
 
