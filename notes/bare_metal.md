@@ -44,9 +44,10 @@ This uses AND, so the value of a bit in x and in the mask must both be 1, result
 
 Consider `x = 0000_1010`
 To toggle bit 5 from 0 to 1, we use the `x ^= (1 << 5 );`. This uses bitwise XOR.
-  0000_1010   (x = 10)
-^ 0010_0000   (mask)
-= 0010_1010   (bit 5 flipped from 0 to 1)
+
+          0000_1010   (x = 10)
+        ^ 0010_0000   (mask)
+        = 0010_1010   (bit 5 flipped from 0 to 1)
 
 XOR flips bit 0 to 1, or 1 to 0.
 
