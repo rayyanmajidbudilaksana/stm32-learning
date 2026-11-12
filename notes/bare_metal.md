@@ -51,3 +51,59 @@ To toggle bit 5 from 0 to 1, we use the `x ^= (1 << 5 );`. This uses bitwise XOR
 
 XOR flips bit 0 to 1, or 1 to 0.
 
+
+## GPIO REGISTERS
+GPIO can be configured by changing the bits in the registers
+To configure a GPIO, use the mode register (GPIOx_MODER)
+Since a register is 8 bytes or 32 bits, a GPIO can be configured like
+### Approach A
+        // Configuring PA5 as General Purpose Output Mode 
+        RCC->AHB1ENR |= (1 << 0) // Enable GPIOA port
+        GPIOA->MODER |= (1 << 10) 
+        GPIOA->MODER &= ~(1 << 10)
+
+For a GPIO pin, its bits are 2y:2y+1 in the register. The code sets bit 10 as 1 and 11 as 0 in the mode register, so PA5 is 01: General Purpose Output Mode.
+
+
+
+However, there are other approaches to configuring registers
+### Approach B
+        GPIOA->MODER = (GPIOA->MODER & ~(3U << 10)) | (1U << 10);
+
+Using Approach A is fine (and more explicit), however it can be improved for more reliability.
+
+Approach A uses `1 << 11`, which is a signed `int`. While harmless, but in something like `1 << 31` (which is pin 15) it is undefined behavior in C. Use unsigned or unsigned long constants such as `1U` or `1UL`.
+
+Approach A also does 2 seperate read-modify-writes. The pin enters a intermediate state briefly through betweeen the operation, this can be avoided by the one liner in Approach B.
+
+The "intermediate state" is the moment between the two lines. For a pin just being configured out of reset is fine, but it matters when the pin is already configured.
+
+For a few clock cycles, the pin is flaoting, then drives the level `ODR` holds.
+
+This can cause a glitch on the pin output, through a false edge or a stale `ODR` value.
+
+### Approach C
+Or, you can use the CMSIS, to avoid counting the bits, which is honestly tedious. The F4 headers, handle them.
+        // General purpose output mode (01) 
+        GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER5) | GPIO_MODER_MODER5_0;
+        
+`GPIO_MODER_MODER5`is the mask of the whole 2-bit field (bits 11:10)
+
+`GPIO_MODER_MODER5_0` is the low bit of the field (bit 10)
+
+`GPIO_MODER_MODER5_1` is the high bit (bit 11)
+
+This can also cover other modes
+
+        // AF mode (10):
+        GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER5) | GPIO_MODER_MODER5_1;
+
+        // Analog (11): both bits
+        GPIOA->MODER |= GPIO_MODER_MODER5;
+
+        // Input (00): just clear
+        GPIOA->MODER &= ~GPIO_MODER_MODER5;
+
+RCC register values can be accessed in section 6.3.28 in the RM0390: Reference Manual
+
+GPIO register values can be accessed in 7.4 in the RM0390: Reference Manual
