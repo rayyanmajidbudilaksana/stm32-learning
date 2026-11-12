@@ -2,7 +2,7 @@
 
 A 32 bit register is like a row of switches that are 1 and 0. The LED on the Nucleo is on pin PA5, on for GPIOA, every output register (ODR) has a switch on every pin. Turning on the LED on PA5 means flipping the bit on the ODR register, but ONLY on that single bit, leave the other bits alone.
 
-Registers are written with a prefix, like `0xABCDEFGH`
+Register numbers carry a prefix, like `0xABCDEF12`
 
 A`0b` prefix shows that it is a binary number (example: `0b11001010`
 
@@ -31,7 +31,7 @@ Now, to set bit 5 to 1, we do `x |= (1 << 5);`. Remember that it is OR
         | 0010_0000   (mask)
         = 0010_1010   (only bit 5 changed)
 
-This uses OR, so the value of a bit in x and in the mask must either be 1, or both 1, resulting in 1.
+This uses OR, so the value of a bit in x and in the mask must either be 1, resulting in 1.
 
 Consider `x = 0b0011_0010`
 To clear bit 5, use `x &= ~(1 << 5);`. Notice the `~`, this inverts the mask. 
@@ -55,12 +55,12 @@ XOR flips bit 0 to 1, or 1 to 0.
 ## GPIO REGISTERS
 GPIO can be configured by changing the bits in the registers
 To configure a GPIO, use the mode register (GPIOx_MODER)
-Since a register is 8 bytes or 32 bits, a GPIO can be configured like
+Since a register is 4 bytes or 32 bits, consisting of 8 hexadecimal digits (e.g. `0xA800 0000`) a GPIO can be configured like
 ### Approach A
         // Configuring PA5 as General Purpose Output Mode 
         RCC->AHB1ENR |= (1 << 0) // Enable GPIOA port
         GPIOA->MODER |= (1 << 10) 
-        GPIOA->MODER &= ~(1 << 10)
+        GPIOA->MODER &= ~(1 << 11)
 
 For a GPIO pin, its bits are 2y:2y+1 in the register. The code sets bit 10 as 1 and 11 as 0 in the mode register, so PA5 is 01: General Purpose Output Mode.
 
@@ -76,11 +76,9 @@ Approach A uses `1 << 11`, which is a signed `int`. While harmless, but in somet
 
 Approach A also does 2 seperate read-modify-writes. The pin enters a intermediate state briefly through betweeen the operation, this can be avoided by the one liner in Approach B.
 
-The "intermediate state" is the moment between the two lines. For a pin just being configured out of reset is fine, but it matters when the pin is already configured.
+The "intermediate state" is the moment between the two lines. For a pin just being configured out of reset is fine, but it matters when the pin is already configured. For a few clock cycles, the pin is flaoting, then drives the level `ODR` holds. This can cause a glitch on the pin output, through a false edge or a stale `ODR` value.
 
-For a few clock cycles, the pin is flaoting, then drives the level `ODR` holds.
-
-This can cause a glitch on the pin output, through a false edge or a stale `ODR` value.
+NOTE: FIND OUT MORE ABOUT THIS!!!! PROBABLY STILL WRONG!
 
 ### Approach C
 Or, you can use the CMSIS, to avoid counting the bits, which is honestly tedious. The F4 headers, handle them.
