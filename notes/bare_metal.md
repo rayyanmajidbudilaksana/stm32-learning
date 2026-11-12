@@ -1,8 +1,11 @@
 # BARE METAL PROGRAMMING
 
 A 32 bit register is like a row of switches that are 1 and 0. The LED on the Nucleo is on pin PA5, on for GPIOA, every output register (ODR) has a switch on every pin. Turning on the LED on PA5 means flipping the bit on the ODR register, but ONLY on that single bit, leave the other bits alone.
+
 Registers are written with a prefix, like `0xABCDEFGH`
+
 A`0b` prefix shows that it is a binary number (example: `0b11001010`
+
 A `0x` prefix shows that it is a hexadecimal number 
 
 IMPORTANT: THEY ARE READ FROM RIGHT TO LEFT AND ARE INDEX 0!!
@@ -11,11 +14,12 @@ IMPORTANT: THEY ARE READ FROM RIGHT TO LEFT AND ARE INDEX 0!!
 
 Since we want to only switch one bit at a time WITHOUT messing up the others in the register. We can do it with these 3 operations
 
+
 | Task | Code | What it does |
 | --- | --- | --- |
-| Set bit 5 to 1 | `x |= (1 << 5);` | OR with a mask with only bit 5 on |
+| Set bit 5 to 1 | <code>x &#124;= (1 << 5);</code> | OR with a mask with only bit 5 on |
 | Clear bit 5 to 0 | `x &= ~(1 << 5);` | AND with a mask with everything on EXCEPT bit 5 |
-| Toggle bit 5 | `x ^= (1 << 5 );` | XOR flips on that bit | 
+| Toggle bit 5 | `x ^= (1 << 5);` | XOR flips on that bit |
 
 `1 << 5` means (start with one and shift it left 5 places). So the result would be `0b0010_0000`
 
