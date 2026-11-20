@@ -13,10 +13,10 @@ The maximum value you can load onto SysTick is 16,777,215 which is 2^24-1, the m
 SysTick has 3 registers
 
 | Register | Task |
-|---|---|---|
-|`SysTick->LOAD`| The number set to countdown |
-|`SysTick->VAL`| The current count |
-|`SysTick->CTRL`| Control switches |
+| :--- | :--- |
+| `SysTick->LOAD` | The number set to countdown |
+| `SysTick->VAL` | The current count |
+| `SysTick->CTRL` | Control switches |
 
 
 `CTRL` can be configured on these bits (switch them to 1)
@@ -50,11 +50,8 @@ There is no `HAL_Init()`, so the SysTick should be started manually. Also assume
 
 ### Some Notes on this
 - Volatile on `tick`
-`tick` must have `volatile` as external things can change its value while the compiler is busy. `volatile` forces the compiler to read its value on every single cycle.
-
-On the other hand, `last` doesn't need volatile because nothing outside of `main()` changes it.
+`tick` must have `volatile` as external things can change its value while the compiler is busy. `volatile` forces the compiler to read its value on every single cycle. On the other hand, `last` doesn't need volatile because nothing outside of `main()` changes it.
 - Duplicate handler
 CubeIDE already has a handler on `stm32f4xx_it.c`, it calls `HAL_IncTick()`
 You can either change the handler on `stm32f4xx_it.c` by declaring a global tick variable on top, and changing `HAL_IncTick();` with `tick++;`
-
 OR you can just delete it and use the one in `main.c`.
