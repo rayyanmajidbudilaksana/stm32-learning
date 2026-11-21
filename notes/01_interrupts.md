@@ -1,9 +1,9 @@
 # Interrupts
-Think of interrupts like a fire alarm.
+Think of interrupts like a fire alarm. It follows this chain.
 
 The pin is the physical button. On the NUCLEO-F446RE, the big blue button is on PC13, when pressed, it is read 0.
 
-SYSCFG is the one that manages the external interrupt connection tot the GPIOs
+SYSCFG is the one that manages the external interrupt connection to the GPIOs
 
 EXTI is the sensor. It has 16 input lines (0-15), one line for every pin number. So Line 4 can be fed by PA4, PB4, PC4. The `EXTICR` decides which port is connected to each line. EXTI watches its line for an edge (when the signal switches from HIGH to LOW or vice versa). It gives a pending flag when it detects one.
 
@@ -26,6 +26,10 @@ It uses 4 bits per EXTI line. So each register covers 4 lines
 - `EXTICR2`: `EXTI4`-`EXTI7`
 - `EXTICR3`: `EXTI8`-`EXTI11`
 - `EXTICR4`: `EXTI12`-`EXTI15`
+
+SYSCFG has its own RCC clock enable. It is on bit 14 in `RCC_APB2ENR` 
+
+See 6.3.14 on the reference manual
 
 See the reference manual RM0390 on 8.2.3
 
