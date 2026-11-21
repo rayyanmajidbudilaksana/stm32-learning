@@ -28,9 +28,7 @@ SysTick has 3 registers
 ## Example: A non-blocking timer with SysTick, blinking LED on PA5
 There is no `HAL_Init()`, so the SysTick should be started manually. Also assume that I already configured the GPIO somewhere else in the code.
 
-        SysTick->LOAD = (16000U - 1U);
-        SysTick->VAL = 0; // reset the count so no errors and stuff
-        SysTick->CTRL = ( (1<<2) | (1 << 1) | (1<<0));
+        
 
         volatile uint32_t tick = 0;
 
@@ -39,6 +37,13 @@ There is no `HAL_Init()`, so the SysTick should be started manually. Also assume
         }
 
         int main() {
+             // SysTick Config
+             SysTick->LOAD = (16000U - 1U);
+             SysTick->VAL = 0; // reset the count so no errors and stuff
+             SysTick->CTRL = ( (1<<2) | (1 << 1) | (1<<0));
+             
+             //gpio configs
+             
              uint32_t last = 0;
              while(1) {
                    if (tick - last >= 500) {
@@ -53,5 +58,16 @@ There is no `HAL_Init()`, so the SysTick should be started manually. Also assume
 `tick` must have `volatile` as external things can change its value while the compiler is busy. `volatile` forces the compiler to read its value on every single cycle. On the other hand, `last` doesn't need volatile because nothing outside of `main()` changes it.
 - Duplicate handler
 CubeIDE already has a handler on `stm32f4xx_it.c`, it calls `HAL_IncTick()`
-You can either change the handler on `stm32f4xx_it.c` by declaring a global tick variable on top, and changing `HAL_IncTick();` with `tick++;`
+You can either change the handler on `stm32f4xx_it.c` by declaring a global tick variable `extern volatile uint32_t tick` on top of the file, and changing `HAL_IncTick();` with `tick++;`
 OR you can just delete it and use the one in `main.c`.
+- Double reading
+Since `tick` is volatile and we call it twice in the loop, it is better to copy the `tick` to a local variable `uint32_t tick2` on the top of the loop, this prevents the compiler from making reads twice (wastes time i guess)
+
+        while (1)
+          {
+            uint32_t tick2 = tick; //copy the value of tick to avoid double reads
+            if (tick2 - last >= 500) {
+                GPIOA->ODR ^= (1U<<5);
+                last = tick2;
+                }
+            }
