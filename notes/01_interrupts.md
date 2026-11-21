@@ -30,12 +30,26 @@ It uses 4 bits per EXTI line. So each register covers 4 lines
 See the reference manual RM0390 on 8.2.3
 
 
-
-
 ### External Interrupt/Event Controller (EXTI)
+A hardware peripheral that detects changes in input lines. It can be configured
+to detect the rising edge, the falling edge, or both.
+```
+        HIGH (1)            +-------------------+
 
+                            |                   |
+                            |                   |
+                  Rising    |                   |    Falling
+                   Edge     |                   |     Edge
+                    (↑)     |                   |      (↓)
+
+                            |                   |
+        LOW (0)  -----------+                   +-----------
+                           t1                  t2
+```
+It triggers an interrupt request sent to the NVIC to run an ISR, or generate a wakeup signal without a full ISR
+ 
 ### Nested Vectored Interrupt Controller (NVIC)
-
+A hardware block that manages, prioritizes and dispatches interrupts and exceptions. It assigns priority levels (lower numbers are higher priority). It uses the vector table of ISRs so the processor can jump straight to it. Also trakcs the state of interrupts (inactive, pending, active).
 
 ### Interrupt Service Routine (ISR)
 A function that runs automatically when an interrupt triggers, pauses the main program to respond to the event. ISRs should be short, like simply adding a number. Avoid long operations (like long delays or heavy math), so other interrupts are not blocked and so it can respond if another interrupt happens within that timeframe.
